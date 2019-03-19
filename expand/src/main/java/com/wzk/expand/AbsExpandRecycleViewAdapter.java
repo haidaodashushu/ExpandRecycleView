@@ -6,6 +6,8 @@ import android.view.View;
 
 import java.util.List;
 
+import static com.wzk.expand.Utils.taskQueue;
+
 /**
  * Created by 政魁 on 2019/3/14 12:37
  * E-Mail Address：wangzhengkui@yingzi.com
@@ -56,17 +58,17 @@ public abstract class AbsExpandRecycleViewAdapter<T extends ExpandEntity, H exte
     public void expand(H myHolder) {
         int position = myHolder.getAdapterPosition();
         T expandEntity = mData.get(position);
-        List<ExpandEntity> childEntity = expandEntity.getChildEntity();
-        if (childEntity == null || childEntity.size() == 0) {
-            return;
-        }
-        //首先找到该entity在mData中的位置
-        int index = position;
-        for (ExpandEntity entity : childEntity) {
-            mData.add(++index, (T) entity);
-        }
         expandEntity.setExpand(true);
-        notifyItemRangeInserted(position + 1, childEntity.size());
+        List<ExpandEntity> childEntity = expandEntity.getChildEntity();
+        if (childEntity != null && childEntity.size() > 0) {
+            //首先找到该entity在mData中的位置
+            int index = position;
+            for (ExpandEntity entity : childEntity) {
+                mData.add(++index, (T) entity);
+            }
+            notifyItemRangeInserted(position + 1, childEntity.size());
+        }
+
         if (mListener != null) {
             mListener.expand(position, expandEntity);
         }
@@ -81,21 +83,17 @@ public abstract class AbsExpandRecycleViewAdapter<T extends ExpandEntity, H exte
         //合起
         int position = myHolder.getAdapterPosition();
         T expandEntity = mData.get(position);
-        List<ExpandEntity> childEntity = Utils.taskQueue(expandEntity);
-        if (childEntity == null || childEntity.size() == 0) {
-            return;
-        }
-        //首先找到该entity在mData中的位置
-
         expandEntity.setExpand(false);
-        notifyItemRangeRemoved(position + 1, childEntity.size());
-        for (ExpandEntity entity : childEntity) {
-            entity.setExpand(false);
-            mData.remove(entity);
+        List<ExpandEntity> childEntity = taskQueue(expandEntity);
+        if (childEntity != null && childEntity.size() > 0) {
+            //首先找到该entity在mData中的位置
+            for (ExpandEntity entity : childEntity) {
+                entity.setExpand(false);
+                mData.remove(entity);
+            }
+            notifyItemRangeRemoved(position + 1, childEntity.size());
         }
-//        int positionStart = position + 1;
-//        notifyItemRangeChanged(positionStart, mData.size());
-//        notifyDataSetChanged();
+
         if (mListener != null) {
             mListener.collapse(position, expandEntity);
         }

@@ -110,52 +110,27 @@ public class ExpandItemDecoration<T extends ExpandEntity> extends RecyclerView.I
             //不需要帮助
             return;
         }
-        int deep = firstEntity.getDeep();
+        int startX, startY, endX, endY = 0;
 
-        int[] startXs = new int[deep];
-        int[] startYs = new int[deep];
-        int[] endXs = new int[deep];
-        int[] endYs = new int[deep];
-
-        //首先查找区域内同级的deep的节点
-        int firstLeft = layoutManager.findViewByPosition(first).getLeft();
-        ExpandEntity tempFirstEntity = firstEntity;
-        for (int i = deep - 1; i >= 0; i--) {
-            ExpandEntity parentEntity = tempFirstEntity.getParentEntity();
-            tempFirstEntity = parentEntity;
-            int topIndex = expandEntities.indexOf(parentEntity);
+        for (int i = first; i <= last; i++) {
+            ExpandEntity expandEntity = mExpandAdapter.getDataByPosition(i);
+            View managerViewByPosition = layoutManager.findViewByPosition(i);
+            int firstLeft = managerViewByPosition.getLeft();
+            ExpandEntity parentEntity = expandEntity.getParentEntity();
+            if (parentEntity == null) {
+                continue;
+            }
+            int index = expandEntities.indexOf(parentEntity);
             //如果不在屏幕内，则start
-            if (topIndex < first) {
-                startXs[i] = firstLeft - (deep - i) * horizonLineWidth + horizonLineWidth / 2;
-                endXs[i] = firstLeft - (deep - i) * horizonLineWidth + horizonLineWidth / 2;
-                startYs[i] = layoutManager.findViewByPosition(first).getTop();
+            if (index < first) {
+                startX = firstLeft - horizonLineWidth / 2;
+                endX = firstLeft - horizonLineWidth / 2;
+                startY = layoutManager.findViewByPosition(first).getTop();
+                endY = managerViewByPosition.getTop() + managerViewByPosition.getHeight() / 2;
+                canvas.drawLine(startX, startY, endX, endY, mPaint);
             }
-            //查看该parentEntity的子节点是否在屏幕内
-            List<ExpandEntity> childEntity = parentEntity.getChildEntity();
-            for (int j = childEntity.size() - 1; j >= 0; j--) {
-                ExpandEntity child = childEntity.get(j);
-                int index = expandEntities.indexOf(child);
-                if (index > last) {
-                    endYs[i] = layoutManager.findViewByPosition(last).getBottom();
-                    break;
-                } else {
-                    View view = layoutManager.findViewByPosition(index);
-                    endYs[i] = view.getTop() + view.getHeight() / 2;
-                    break;
-                }
-            }
-
-        }
-
-        for (int i = 0; i < startXs.length; i++) {
-            startXs[i] = getLWithPadding(startXs[i], parent);
-            startYs[i] = getTWithPadding(startYs[i], parent);
-            endXs[i] = getRWithPadding(endXs[i], parent);
-            endYs[i] = getBWithPadding(endYs[i], parent);
-            canvas.drawLine(startXs[i], startYs[i], endXs[i], endYs[i], mPaint);
         }
     }
-
 
     private void drawVertical(Canvas canvas, int first, int last, RecyclerView parent) {
         LinearLayoutManager layoutManager = (LinearLayoutManager) parent.getLayoutManager();
@@ -175,6 +150,9 @@ public class ExpandItemDecoration<T extends ExpandEntity> extends RecyclerView.I
 
             //计算最后一个子View在屏幕上的位置,以便获取endY的值
             List<ExpandEntity> childEntity = expandEntity.getChildEntity();
+            if (childEntity == null || childEntity.size() == 0) {
+                continue;
+            }
             int lastVisibleChild = 0;
             for (int j = 0; j < childEntity.size(); j++) {
                 ExpandEntity child = childEntity.get(j);
