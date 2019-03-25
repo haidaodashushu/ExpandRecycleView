@@ -91,7 +91,8 @@ public abstract class AbsExpandRecycleViewAdapter<T extends ExpandEntity, H exte
                 entity.setExpand(false);
                 mData.remove(entity);
             }
-            notifyItemRangeRemoved(position + 1, childEntity.size());
+//            notifyItemRangeRemoved(position + 1, childEntity.size());
+            notifyDataSetChanged();
         }
 
         if (mListener != null) {
